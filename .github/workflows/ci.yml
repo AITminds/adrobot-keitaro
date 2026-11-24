@@ -1,0 +1,81 @@
+name: Tests and container
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install uv
+      - run: uv sync --frozen --python ${{ matrix.python }}
+      - run: uv run python -m scripts.test
+      - run: uv run alembic upgrade head
+      - run: uv run alembic check
+      - run: node --check app/static/app.js
+
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: adrobot
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: adrobot_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U adrobot -d adrobot_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://adrobot:test-only-password@localhost:5432/adrobot_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: python -m pip install uv
+      - run: uv sync --frozen
+      - run: uv run python -m scripts.test tests/test_postgres.py
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t adrobot:test .
+      - run: docker run -d --name adrobot-test -p 127.0.0.1:8765:8000 adrobot:test
+      - name: Verify container health and demo API
+        run: |
+          python - <<'PY'
+          import json, time, urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:8765/healthz', timeout=2) as response:
+                      assert json.load(response)['status'] == 'ok'
+                  break
+              except (OSError, AssertionError):
+                  time.sleep(2)
+          else:
+              raise SystemExit('Container did not become healthy')
+          request = urllib.request.Request('http://127.0.0.1:8765/api/campaigns/1001/sync', data=b'{}', headers={'Content-Type':'application/json'})
+          with urllib.request.urlopen(request, timeout=10) as response:
+              campaign = json.load(response)
+              assert len(campaign['streams']) == 2
+              assert campaign['streams'][1]['total_share'] == 100
+          PY
+      - if: always()
+        run: docker logs adrobot-test

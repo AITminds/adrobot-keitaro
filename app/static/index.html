@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Adrobot — управление кампаниями</title>
+    <meta
+      name="description"
+      content="Создание кампаний Keitaro и управление офферами: черновики, архив и точное распределение трафика."
+    />
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Перейти к кампаниям</a>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Adrobot, главная"
+        ><span class="brand-mark">a<span>·</span></span
+        ><span
+          >adrobot<span class="brand-caption">CAMPAIGN WORKSPACE</span></span
+        ></a
+      >
+      <div class="sidebar-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+      <div class="nav-item selected">
+        <svg><use href="/static/icons.svg#grid" /></svg>Кампании
+        <span class="nav-count" id="nav-count">0</span>
+      </div>
+      <div class="sidebar-section">
+        <span>МОИ КАМПАНИИ</span
+        ><button
+          class="icon-button inverse"
+          data-action="import"
+          aria-label="Загрузить кампанию из Keitaro"
+          title="Загрузить из Keitaro"
+        >
+          <svg><use href="/static/icons.svg#plus" /></svg>
+        </button>
+      </div>
+      <nav id="campaign-list" aria-label="Список кампаний">
+        <p class="sidebar-note">Загрузка…</p>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="integration-icon">K</div>
+        <div>
+          <strong>Keitaro</strong><span id="sidebar-mode">Подключение…</span>
+        </div>
+        <span class="connection-dot" id="connection-dot"></span>
+      </div>
+    </aside>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="breadcrumbs">
+          <span>Рабочее пространство</span><span class="slash">/</span
+          ><strong>Кампании</strong>
+        </div>
+        <span class="mode-badge" id="mode-badge">Загрузка</span>
+      </header>
+      <main id="workspace" tabindex="-1">
+        <div class="page-heading">
+          <div>
+            <div class="eyebrow">УПРАВЛЕНИЕ ТРАФИКОМ</div>
+            <h1>Кампании</h1>
+            <p>
+              Настраивайте потоки. Управляйте долями. Публикуйте, когда готовы.
+            </p>
+          </div>
+          <div class="heading-actions">
+            <button
+              class="button secondary"
+              data-action="import"
+              aria-label="Загрузить из Keitaro"
+            >
+              <svg><use href="/static/icons.svg#download" /></svg>Из Keitaro</button
+            ><button class="button primary" data-action="create">
+              <svg><use href="/static/icons.svg#plus" /></svg>Создать кампанию
+            </button>
+          </div>
+        </div>
+        <div class="mode-notice" id="mode-notice" hidden></div>
+        <div class="error-banner" id="global-error" role="alert" hidden></div>
+        <div class="mobile-selector">
+          <label for="mobile-campaign">Кампания</label
+          ><select id="mobile-campaign"></select>
+        </div>
+        <section id="campaign-content" aria-live="polite">
+          <div class="loading-state">
+            <span class="spinner"></span>Загружаем рабочее пространство…
+          </div>
+        </section>
+        <footer class="page-footer">
+          <span>Adrobot · Keitaro workspace</span
+          ><a href="/docs" target="_blank" rel="noopener">Документация API</a>
+        </footer>
+      </main>
+    </div>
+
+    <dialog id="create-dialog" aria-labelledby="create-title">
+      <form id="create-form">
+        <div class="dialog-header">
+          <div>
+            <div class="eyebrow">НОВАЯ КАМПАНИЯ</div>
+            <h2 id="create-title">Запустим новый поток</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button"
+            data-close="create-dialog"
+            aria-label="Закрыть создание кампании"
+          >
+            <svg><use href="/static/icons.svg#close" /></svg>
+          </button>
+        </div>
+        <p class="dialog-description">
+          Одна кампания, два потока и готовое распределение трафика.
+        </p>
+        <div class="form-error" role="alert" hidden></div>
+        <label for="campaign-name">Название кампании</label
+        ><input
+          id="campaign-name"
+          name="name"
+          required
+          maxlength="180"
+          autocomplete="off"
+        />
+        <p class="field-hint" id="prefix-hint"></p>
+        <div class="form-grid">
+          <div>
+            <label for="country">Страна для редиректа</label
+            ><select id="country" name="country" required></select>
+          </div>
+          <div>
+            <label for="domain">Домен</label
+            ><select id="domain" name="domain_id" required></select>
+          </div>
+          <div>
+            <label for="group">Группа кампаний</label
+            ><select id="group" name="group_id" required></select>
+          </div>
+          <div>
+            <label for="source">Источник трафика</label
+            ><select id="source" name="traffic_source_id" required></select>
+          </div>
+        </div>
+        <label for="create-offer-query">Найти оффер по названию или ID</label>
+        <div class="search-field">
+          <svg><use href="/static/icons.svg#search" /></svg
+          ><input
+            id="create-offer-query"
+            placeholder="Например, 101 или Design Academy"
+            autocomplete="off"
+          />
+        </div>
+        <label for="create-offer">Оффер для основного потока</label
+        ><select id="create-offer" name="offer_id" required>
+          <option value="">Выберите оффер</option>
+        </select>
+        <div class="route-preview">
+          <span class="route-dot blue"></span>
+          <div>
+            <strong>Поток 1 · Геофильтр</strong
+            ><span>Выбранная страна — редирект на Google</span>
+          </div>
+          <span class="route-dot purple"></span>
+          <div>
+            <strong>Поток 2 · Оффер</strong
+            ><span>Остальной трафик — 100% на выбранный оффер</span>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button
+            type="button"
+            class="button secondary"
+            data-close="create-dialog"
+          >
+            Отмена</button
+          ><button type="submit" class="button primary">
+            Создать кампанию
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="offer-dialog" aria-labelledby="offer-title">
+      <form id="offer-form">
+        <div class="dialog-header">
+          <div>
+            <div class="eyebrow">ОФФЕРЫ KEITARO</div>
+            <h2 id="offer-title">Добавить оффер</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button"
+            data-close="offer-dialog"
+            aria-label="Закрыть выбор оффера"
+          >
+            <svg><use href="/static/icons.svg#close" /></svg>
+          </button>
+        </div>
+        <p class="dialog-description">
+          Свободные доли пересчитаются автоматически. Закреплённые останутся
+          прежними.
+        </p>
+        <div class="form-error" role="alert" hidden></div>
+        <label for="offer-query">Название или ID</label>
+        <div class="search-field">
+          <svg><use href="/static/icons.svg#search" /></svg
+          ><input
+            id="offer-query"
+            placeholder="Поиск оффера…"
+            autocomplete="off"
+          />
+        </div>
+        <label for="offer-select">Доступные офферы</label
+        ><select id="offer-select" size="6" required></select>
+        <p class="field-hint" id="offer-count"></p>
+        <div class="dialog-footer">
+          <button
+            type="button"
+            class="button secondary"
+            data-close="offer-dialog"
+          >
+            Отмена</button
+          ><button type="submit" class="button primary">
+            Добавить в черновик
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="import-dialog" aria-labelledby="import-title">
+      <form id="import-form">
+        <div class="dialog-header">
+          <div>
+            <div class="eyebrow">СИНХРОНИЗАЦИЯ</div>
+            <h2 id="import-title">Загрузить из Keitaro</h2>
+          </div>
+          <button
+            type="button"
+            class="icon-button"
+            data-close="import-dialog"
+            aria-label="Закрыть загрузку кампании"
+          >
+            <svg><use href="/static/icons.svg#close" /></svg>
+          </button>
+        </div>
+        <p class="dialog-description">
+          Загрузите существующую кампанию и её потоки для редактирования.
+        </p>
+        <div class="form-error" role="alert" hidden></div>
+        <label for="import-query">Название или ID кампании</label
+        ><input
+          id="import-query"
+          placeholder="Поиск кампании…"
+          autocomplete="off"
+        /><label for="import-select">Кампания</label
+        ><select id="import-select" size="6" required></select>
+        <p class="field-hint">
+          Кампании с другим префиксом доступны только для просмотра.
+          Существующие черновики защищены от перезаписи.
+        </p>
+        <div class="dialog-footer">
+          <button
+            type="button"
+            class="button secondary"
+            data-close="import-dialog"
+          >
+            Отмена</button
+          ><button type="submit" class="button primary">Получить потоки</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" hidden></div>
+  </body>
+</html>

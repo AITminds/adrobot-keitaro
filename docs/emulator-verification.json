@@ -1,0 +1,34 @@
+{
+  "verified_at": "2026-11-24T09:35:56.272739+00:00",
+  "tracker": "https://keitaro-for-tests.etolegko.com",
+  "campaign_id": 33,
+  "campaign_name": "test_terentev_emulator_check_20261124_093542",
+  "stream_ids": [
+    58,
+    59
+  ],
+  "offer_ids": [
+    18001,
+    18002,
+    18003,
+    18004
+  ],
+  "checks": [
+    "Local application is connected to the external emulator",
+    "Offer catalog is available",
+    "Created an active campaign with two flows",
+    "Domain, group and traffic source match the selected catalog entries",
+    "Priority-one country filter redirects to Google",
+    "Default flow starts with the selected offer at 100 percent",
+    "Repeating the creation request does not duplicate the campaign",
+    "Three offers receive exact 34/33/33 shares",
+    "Unpublished drafts do not change the remote flow",
+    "Cancel restores the baseline and removes new relations",
+    "Pinned share is retained when another offer is removed",
+    "Publish removes the remote relation and retains the local archive",
+    "Bring back restores four equal shares",
+    "Fetch detects external removals and archives them locally",
+    "Final draft and remote offers are synchronized at 100 percent",
+    "Offer edits leave the redirect flow unchanged"
+  ]
+}

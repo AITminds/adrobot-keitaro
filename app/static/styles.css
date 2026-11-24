@@ -425,6 +425,14 @@ h1 {
 .campaign-title-block {
   min-width: 0;
 }
+.tracker-link {
+  color: var(--accent, #4f46e5);
+  font-size: 12px;
+  text-decoration: none;
+}
+.tracker-link:hover {
+  text-decoration: underline;
+}
 .campaign-meta {
   display: flex;
   align-items: center;

@@ -179,6 +179,14 @@ def create_app(settings=None, tracker=None):
     def config():
         return {
             "mode": settings.adrobot_mode,
+            "tracker_url": (
+                settings.keitaro_base_url.rstrip("/")
+                if settings.adrobot_mode == "live"
+                else None
+            ),
+            "emulator": settings.adrobot_mode == "live"
+            and settings.keitaro_base_url.rstrip("/")
+            == "https://keitaro-for-tests.etolegko.com",
             "campaign_prefix": settings.campaign_prefix,
             "countries": [
                 {"code": c.alpha_2, "name": c.name}

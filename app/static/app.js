@@ -143,7 +143,7 @@ function renderCampaign() {
   $("#campaign-content").innerHTML = `
     <section class="campaign-panel" aria-label="Выбранная кампания">
       <div class="campaign-top"><div class="campaign-title-block"><div class="campaign-meta"><span>КАМПАНИЯ #${c.id}</span><span class="badge ${c.state === "active" ? "success" : "neutral"}">${c.state === "active" ? "Активна" : "Отключена"}</span>${!c.writable ? '<span class="badge warning">Только просмотр</span>' : ""}</div><h2 class="campaign-title">${esc(c.name)}</h2><div class="campaign-settings"><span>${icon("globe")}${esc(catalogName("domains", c.domain_id))}</span><span>${icon("layers")}${esc(catalogName("groups", c.group_id))}</span><span>${esc(catalogName("traffic_sources", c.traffic_source_id))}</span></div></div>
-      <div class="sync-block"><button class="button secondary" data-action="sync" ${dirty ? 'disabled title="Сначала опубликуйте или отмените черновики"' : ""}>${icon("refresh")}Получить потоки</button><p>${dirty ? "Сначала опубликуйте или отмените черновики" : `Синхронизация ${esc(synced)}`}</p></div></div>
+      <div class="sync-block"><button class="button secondary" data-action="sync" ${dirty ? 'disabled title="Сначала опубликуйте или отмените черновики"' : ""}>${icon("refresh")}Получить потоки</button><p>${dirty ? "Сначала опубликуйте или отмените черновики" : `Синхронизация ${esc(synced)}`}</p>${state.config.tracker_url ? `<a class="tracker-link" href="${esc(state.config.tracker_url)}/admin/#!/campaign.editor/${c.id}" target="_blank" rel="noopener noreferrer">Открыть в Keitaro ↗</a>` : ""}</div></div>
       <div class="campaign-stats"><div class="stat"><strong>${c.streams.filter((s) => s.remote_present).length}</strong><span>потока</span></div><div class="stat"><strong>${active}</strong><span>активных офферов</span></div><div class="stat ${dirty ? "has-drafts" : ""}"><strong>${dirty}</strong><span>черновиков</span></div></div>
     </section>
     <div class="section-heading"><h2>Потоки кампании</h2><p>Изменения вступают в силу после публикации</p></div>
@@ -481,13 +481,23 @@ async function boot() {
   try {
     state.config = await api("/config");
     const demo = state.config.mode === "demo";
-    $("#mode-badge").textContent = demo ? "Деморежим" : "Keitaro API";
+    $("#mode-badge").textContent = demo
+      ? "Деморежим"
+      : state.config.emulator
+        ? "Keitaro Emulator"
+        : "Keitaro API";
     $("#sidebar-mode").textContent = demo
       ? "Локальный демотрекер"
-      : "Реальный трекер";
+      : state.config.emulator
+        ? "Учебный стенд · API"
+        : "Подключён по API";
     if (demo) {
       $("#mode-notice").innerHTML =
         "<strong>Деморежим.</strong> Можно создавать кампании и публиковать изменения в локальном демотрекере. Данные сохраняются после перезапуска. Реальный Keitaro не затрагивается.";
+      $("#mode-notice").hidden = false;
+    } else if (state.config.emulator) {
+      $("#mode-notice").textContent =
+        "Подключён учебный стенд keitaro-for-tests.etolegko.com. Кампании и публикации сохраняются на сервере. Клики и статистика стендом не поддерживаются.";
       $("#mode-notice").hidden = false;
     }
     const results = await Promise.allSettled([api("/catalog"), refreshList()]);
